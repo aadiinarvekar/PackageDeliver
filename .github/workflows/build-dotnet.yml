@@ -1,0 +1,43 @@
+name: .NET CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    # We use windows-latest because the project targets Windows to get a .exe
+    runs-on: windows-latest
+
+    steps:
+    # Checks out a copy of your repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Sets up the .NET SDK environment
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        # The project targets .NET 6, so we use that version
+        dotnet-version: '6.0.x'
+
+    # Restores the NuGet packages required for the project
+    - name: Restore dependencies
+      run: dotnet restore
+
+    # Builds the project in Release configuration
+    - name: Build
+      run: dotnet build --no-restore -c Release
+
+    # Publishes the project, creating the final executable and its dependencies
+    - name: Publish
+      run: dotnet publish -c Release --no-build -o ./publish
+
+    # Uploads the published files as an artifact
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: PackageDeliver-Executable
+        path: ./publish
