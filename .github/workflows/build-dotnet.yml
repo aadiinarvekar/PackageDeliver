@@ -1,18 +1,14 @@
-name: .NET Build and Release
+name: .NET CI
 
-# This workflow runs when a tag is pushed, e.g., v1.0.0
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  build-and-release:
+  build:
     runs-on: windows-latest
-
-    # Grant permissions for the action to create a release
-    permissions:
-      contents: write
 
     steps:
     - name: Checkout repository
@@ -23,6 +19,7 @@ jobs:
       with:
         dotnet-version: '6.0.x'
 
+    # We now specify the solution file for each dotnet command
     - name: Restore dependencies
       run: dotnet restore PackageDeliver.sln
 
@@ -32,12 +29,8 @@ jobs:
     - name: Publish
       run: dotnet publish PackageDeliver.sln -c Release --no-build -o ./publish
 
-    # Zips the published output
-    - name: Zip the executable
-      run: Compress-Archive -Path ./publish/* -DestinationPath PackageDeliver.zip
-
-    # Creates the GitHub Release and uploads the zip file
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
       with:
-        files: PackageDeliver.zip
+        name: PackageDeliver-Executable
+        path: ./publish
